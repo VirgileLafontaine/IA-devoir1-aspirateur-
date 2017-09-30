@@ -22,10 +22,16 @@ namespace Aspirateur
             //attente du démarrage du thread environnement
             while (!threadEnv.IsAlive);
 
-            //sleep de 1 ms pour laisser travailler le thread environnement
-            Thread.Sleep(1);
+            // test de création de 10ms d'intervalle pour laisser travailler le thread environnement
+            for (int i = 0; i < 20; i++)
+            {
+                env.EventCreerBijoux();
+                env.EventCreerPoussiere();
+                Thread.Sleep(10);
 
+            }
             //arret du thread environnement de par lui même
+
             env.arret();
 
             //attente de la fin du thread environnement
