@@ -68,7 +68,7 @@ namespace Aspirateur
                     creerBijoux();
                     doitCreerBijoux = false;
                 }
-                Console.WriteLine("thread env : execution...");
+                
             }
             Console.WriteLine("thread env : arrêt");
         }
