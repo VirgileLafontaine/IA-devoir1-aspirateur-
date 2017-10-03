@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -26,11 +26,14 @@ namespace Aspirateur
         private volatile bool doisArreter = false;
 
         ///doit créer une poussière
-        private bool doitCreerPoussiere = false;
+        private volatile bool doitCreerPoussiere = false;
 
-        ///doir créer un bijoux
-        private bool doitCreerBijoux = false;
-        
+        ///doit créer un bijoux
+        private volatile bool doitCreerBijoux = false;
+
+        /// file d'action que l'aspirateur réalise à effectuer par l'environnement
+        public static volatile Queue fileAction;
+
         //variable seed aléatoire
         private Random rand;
         //---------------------Constructeurs----------------------------//
@@ -68,7 +71,10 @@ namespace Aspirateur
                     creerBijoux();
                     doitCreerBijoux = false;
                 }
-                
+                while (fileAction.Count != 0)
+                {
+
+                }
             }
             Console.WriteLine("thread env : arrêt");
         }
@@ -91,36 +97,7 @@ namespace Aspirateur
             doitCreerBijoux = true;
         }
 
-
-        ///methode d'action de l'aspirateur
-        public void actionAspirateur(String action, int position)
-        {
-            switch (action)
-            {
-                case "aspirer":
-                    if (carte[position] == (int)objetCase.POUSSIERE) { mesurePerformance -= malusApparitionPousiere; }
-                    else if (carte[position] == (int)objetCase.BIJOUX) { mesurePerformance += malusAspirationBijoux; }
-                    else if (carte[position] == (int)objetCase.POUSSIEREBIJOUX) { mesurePerformance += ( malusAspirationBijoux - malusApparitionPousiere ); }
-                    carte[position] = (int)objetCase.VIDE;
-                    break;
-
-                case "prendre":
-                    if (carte[position] == (int)objetCase.BIJOUX)
-                    {
-                        mesurePerformance -= malusApparitionBijoux;
-                        carte[position] = (int)objetCase.VIDE;
-                    }
-                    else if (carte[position] == (int)objetCase.POUSSIEREBIJOUX) {
-                        mesurePerformance -= malusApparitionBijoux;
-                        carte[position] = (int)objetCase.POUSSIERE;
-                    }
-                    break;
-
-                default:
-                    break;
-            }
-        }
-
+        
         //---------------------methodes internes-------------------//
         ///methode de création de poussiere
         private void creerPoussiere()
