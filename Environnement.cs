@@ -6,7 +6,8 @@ using System.Threading;
 
 namespace Aspirateur
 {
-    class Environnement
+
+    public class Environnement
     {
         //--------------variables privées de l'environnement-------------//
 
@@ -15,6 +16,9 @@ namespace Aspirateur
         
         ///carte de l'environnement et des objets présents dans les pieces de cet environnement
         private int[] carte = new int[100];
+
+        /// file d'action que l'aspirateur réalise à effectuer par l'environnement
+        public static volatile Queue fileAction = new Queue();
 
         ///Mesure de performance, 0 = meilleur, poussiere +1, bijoux +10, aspirer bijoux +100
         private int mesurePerformance = 0;
@@ -31,8 +35,8 @@ namespace Aspirateur
         ///doit créer un bijoux
         private volatile bool doitCreerBijoux = false;
 
-        /// file d'action que l'aspirateur réalise à effectuer par l'environnement
-        public static volatile Queue fileAction;
+        ///message reçu
+        Tuple<Action, int> message;
 
         //variable seed aléatoire
         private Random rand;
@@ -73,7 +77,16 @@ namespace Aspirateur
                 }
                 while (fileAction.Count != 0)
                 {
-
+                    message = (Tuple<Action, int>)fileAction.Dequeue();
+                    switch (message.Item1)
+                    {
+                        case Action.ASPIRER:
+                            aspirer(message.Item2);
+                            break;
+                        case Action.RAMASSER:
+                            ramasser(message.Item2);
+                            break;
+                    }
                 }
             }
             Console.WriteLine("thread env : arrêt");
@@ -128,6 +141,42 @@ namespace Aspirateur
             {
                 carte[aleatoire] = (int)objetCase.POUSSIEREBIJOUX;
                 mesurePerformance += malusApparitionBijoux;
+            }
+
+        }
+        
+        private void aspirer(int position)
+        {
+            if (carte[position]== (int)objetCase.BIJOUX)
+            {
+                carte[position] = (int)objetCase.VIDE;
+                mesurePerformance += malusAspirationBijoux;
+            }
+            else if (carte[position] == (int)objetCase.POUSSIERE)
+            {
+                carte[position] = (int)objetCase.VIDE;
+                mesurePerformance -= malusApparitionPousiere;
+            }
+            else if (carte[position] == (int)objetCase.POUSSIEREBIJOUX)
+            {
+                carte[position] = (int)objetCase.VIDE;
+                mesurePerformance -= malusApparitionPousiere;
+                mesurePerformance += malusAspirationBijoux;
+            }
+
+        }
+
+        private void ramasser(int position)
+        {
+            if (carte[position] == (int)objetCase.BIJOUX)
+            {
+                carte[position] = (int)objetCase.VIDE;
+                mesurePerformance -= malusApparitionBijoux;
+            }
+            else if (carte[position] == (int)objetCase.POUSSIEREBIJOUX)
+            {
+                carte[position] = (int)objetCase.POUSSIERE;
+                mesurePerformance -= malusApparitionBijoux;
             }
         }
 

@@ -42,8 +42,7 @@ namespace Aspirateur
             long time = time = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
             long time2;
 
-            //variables pour stocker la grille a afficher
-            int[] terrain;
+            //variable pour stocker la grille a afficher
             int[] terrainOld;
 
             //variable seed aléatoire
@@ -53,13 +52,22 @@ namespace Aspirateur
             Environnement env = new Environnement();
             Thread threadEnv = new Thread(env.run);
 
-            //démarrage du thread
+            //création de l'agent dans l'environnement et de son thread dédié
+            Agent agent = new Agent(env);
+            Thread threadAgent = new Thread(agent.Lancer);
+            //démarrage du thread environnement et agent
             threadEnv.Start();
             Console.WriteLine("thread principal : démarrage du thread environnement");
 
             //attente du démarrage du thread environnement
-            while (!threadEnv.IsAlive);
+            while (!threadEnv.IsAlive) ;
 
+            threadAgent.Start();
+            Console.WriteLine("thread principal : démarrage du thread agent");
+
+            //attente du démarrage du thread agent
+            while (!threadAgent.IsAlive) ;
+            
             //on charge le terrain vide
             terrainOld = env.getCarte();
             prog.afficherCarte(terrainOld);
@@ -94,7 +102,14 @@ namespace Aspirateur
 
             //attente de la fin du thread environnement
             threadEnv.Join();
-            Console.WriteLine("thread principal : thread environnement c'est terminé, appuyez sur une touche pour quitter...");
+            Console.WriteLine("thread principal : thread environnement c'est terminé");
+            //arret du thread agent de par lui même
+            agent.arret();
+
+            //attente de la fin du thread environnement
+            threadEnv.Join();
+            Console.WriteLine("thread principal : thread environnement c'est terminé");
+
             Console.ReadKey();
         }
     }
