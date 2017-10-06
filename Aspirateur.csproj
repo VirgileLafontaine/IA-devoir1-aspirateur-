@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="Agent.cs" />
     <Compile Include="Environnement.cs" />
+    <Compile Include="Graphe.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

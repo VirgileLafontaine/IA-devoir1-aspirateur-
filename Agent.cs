@@ -124,7 +124,7 @@ namespace Aspirateur
     // - BAS : l'agent se déplace d'une case vers le bas
     // - DROITE : l'agent se déplace d'une case vers la droite
     // - GAUCHE : l'agent se déplace d'une case vers la gauche
-    public enum Action {ASPIRER, RAMASSER, HAUT, BAS, DROITE, GAUCHE} ;
+    public enum Action {ASPIRER, RAMASSER, HAUT, BAS, DROITE, GAUCHE, RIEN} ;
 
     // NOTE : je pense qu'il faut mettre l'environnement en classe statique (une seule instance modifiée par des appels de méthode static)
 
