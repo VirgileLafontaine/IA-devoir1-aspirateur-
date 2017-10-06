@@ -6,13 +6,13 @@ using System.Threading;
 
 namespace Aspirateur
 {
+    
+    ///constantes des objets dans une piece, VIDE = 0, POUSSIERE = 1 ...
+    public enum objetCase { VIDE, POUSSIERE, BIJOUX, POUSSIEREBIJOUX };
 
     public class Environnement
     {
         //--------------variables privées de l'environnement-------------//
-
-        ///constantes des objets dans une piece, VIDE = 0, POUSSIERE = 1 ...
-        private enum objetCase { VIDE, POUSSIERE, BIJOUX, POUSSIEREBIJOUX };
         
         ///carte de l'environnement et des objets présents dans les pieces de cet environnement
         private int[] carte = new int[100];
