@@ -81,10 +81,10 @@ namespace Aspirateur
                     switch (message.Item1)
                     {
                         case Action.ASPIRER:
-                            aspirer(message.Item2);
+                            Aspirer(message.Item2);
                             break;
                         case Action.RAMASSER:
-                            ramasser(message.Item2);
+                            Ramasser(message.Item2);
                             break;
                     }
                 }
@@ -145,7 +145,7 @@ namespace Aspirateur
 
         }
         
-        private void aspirer(int position)
+        private void Aspirer(int position)
         {
             if (carte[position]== (int)objetCase.BIJOUX)
             {
@@ -166,7 +166,7 @@ namespace Aspirateur
 
         }
 
-        private void ramasser(int position)
+        private void Ramasser(int position)
         {
             if (carte[position] == (int)objetCase.BIJOUX)
             {

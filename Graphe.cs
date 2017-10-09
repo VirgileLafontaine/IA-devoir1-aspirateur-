@@ -43,6 +43,9 @@ namespace Aspirateur
         
         // Coût de chemin
         public int CoutChemin { get; set; }
+        
+        // Valeur heuristique
+        public int Heuristique { get; set; }
 
         /* Constructeur du noeud : correspond à MAKE-NODE(..) */
         // Le noeud parent est null pour le noeud racine
