@@ -37,7 +37,7 @@ namespace Aspirateur
         // L'objectif est formulé sous la forme d'une fonction de test de but
         public bool TestBut(Etat etat)
         {
-            return etat.NbPoussiere == 0;
+            return etat.ListePoussiere.Count == 0;
         }
 
         // Constructeur du BDI
@@ -130,12 +130,14 @@ namespace Aspirateur
 
     public abstract class Exploration
     {
+        protected List<Etat> DejaVisites = new List<Etat>();
+        
         // Insère le noeud dans la frange, représentée sous forme de liste
-        protected abstract List<Noeud> InsererNoeud(List<Noeud> frange, Noeud noeud, int[] carte);
+        protected abstract List<Noeud> InsererNoeud(List<Noeud> frange, Noeud noeud);
         
         // Fonction générique d'exploration
         // Retourne null en cas d'erreur
-        public Queue Explorer(Etat etatInitial, int[] carte,  Func<Etat, bool> testBut)
+        public Queue Explorer(Etat etatInitial, int[] bdiCarte, Func<Etat, bool> testBut)
         {
             /* Création du graphe */
             Graphe arbreRecherche = new Graphe(etatInitial);
@@ -156,9 +158,10 @@ namespace Aspirateur
                 if (testBut(noeud.EtatNoeud)) return arbreRecherche.SequenceActions(noeud);
                 
                 // Expansion du noeud
-                foreach (Noeud n in noeud.FonctionSuccession(carte))
+                DejaVisites.Add(noeud.EtatNoeud);
+                foreach (Noeud n in noeud.FonctionSuccession())
                 {
-                    frange = InsererNoeud(frange, n, carte);
+                    frange = InsererNoeud(frange, n);
                     noeud.AjouterEnfant(n);
                 }
             }
@@ -167,9 +170,9 @@ namespace Aspirateur
     
     public class RechercheEnLargeur : Exploration
     {
-        protected override List<Noeud> InsererNoeud(List<Noeud> frange, Noeud noeud, int[] carte)
+        protected override List<Noeud> InsererNoeud(List<Noeud> frange, Noeud noeud)
         {
-            frange.Add(noeud);
+            if (!DejaVisites.Exists(n => n.Equals(noeud.EtatNoeud))) {frange.Add(noeud);}
             return frange;
         }
     }
@@ -181,21 +184,18 @@ namespace Aspirateur
             return Math.Abs(pos1 % 10 - pos2 % 10) + Math.Abs(pos1 / 10 - pos2 / 10);
         }
         
-        private int CalculHeuristique(int[] carte, Noeud noeud)
+        private int CalculHeuristique(Noeud noeud)
         {
             int max = 0;
-            foreach (var x in carte)
+            foreach(int x in noeud.EtatNoeud.ListePoussiere)
             {
-                if (x == (int) objetCase.POUSSIERE || x == (int) objetCase.POUSSIEREBIJOUX)
+                int distance = DistanceManhattan(noeud.EtatNoeud.Position,x);
+                if (distance > max)
                 {
-                    int distance = DistanceManhattan(noeud.EtatNoeud.Position, x);
-                    if (distance > max)
-                    {
-                        max = distance;
-                    }
+                    max = distance;
                 }
             }
-            return max + noeud.EtatNoeud.NbPoussiere;
+            return max + noeud.EtatNoeud.ListePoussiere.Count;
         }
         
         private static int ComparaisonAStar(Noeud n1, Noeud n2)
@@ -205,9 +205,9 @@ namespace Aspirateur
             return evaluationN1.CompareTo(evaluationN2);
         }
         
-        protected override List<Noeud> InsererNoeud(List<Noeud> frange, Noeud noeud, int[] carte)
+        protected override List<Noeud> InsererNoeud(List<Noeud> frange, Noeud noeud)
         {
-            noeud.Heuristique = CalculHeuristique(carte, noeud);
+            noeud.Heuristique = CalculHeuristique(noeud);
             frange.Add(noeud);
             frange.Sort(ComparaisonAStar);
             return frange;
@@ -237,12 +237,12 @@ namespace Aspirateur
 
             switch (exploration)
             {
-                   case AlgoExploration.LARGEUR:
-                       _exploration = new RechercheEnLargeur();
-                       break;
-                   case AlgoExploration.ASTAR:
-                       _exploration = new Astar();
-                       break;
+                case AlgoExploration.LARGEUR:
+                    _exploration = new RechercheEnLargeur();
+                    break;
+                case AlgoExploration.ASTAR:
+                    _exploration = new Astar();
+                    break;
             }
         }
 
@@ -294,14 +294,15 @@ namespace Aspirateur
         private void EtablirPlanDAction()
         {
             /* Calcul du nombre de poussières */
-            int nbPoussieres = 0;
-            foreach (var x in _bdi.Carte)
+            List<int> poussieres = new List<int>();
+            List<int> bijoux = new List<int>();
+            for(int i = 0; i < 100; i++)
             {
-                if (x == (int) objetCase.POUSSIERE || x == (int) objetCase.POUSSIEREBIJOUX)
-                    nbPoussieres++;
+                if(_bdi.Carte[i] == (int) objetCase.POUSSIERE || _bdi.Carte[i] == (int) objetCase.POUSSIEREBIJOUX) {poussieres.Add(i);}
+                if(_bdi.Carte[i] == (int) objetCase.BIJOUX || _bdi.Carte[i] == (int) objetCase.POUSSIEREBIJOUX) {bijoux.Add(i);}
             }
             
-            Etat etatInitial = new Etat(_bdi.Position,(objetCase) _bdi.Carte[_bdi.Position], nbPoussieres);
+            Etat etatInitial = new Etat(_bdi.Position,(objetCase) _bdi.Carte[_bdi.Position], poussieres, bijoux);
             _bdi.PlanDAction = _exploration.Explorer(etatInitial, _bdi.Carte, _bdi.TestBut);
         }
 

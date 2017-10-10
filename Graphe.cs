@@ -11,14 +11,17 @@ namespace Aspirateur
         public int Position { get; set; }
         
         public objetCase EtatPiece { get; set; }
-        
-        public int NbPoussiere { get; set; }
 
-        public Etat(int pos, objetCase etat, int nbPoussiere)
+        public List<int> ListePoussiere;
+
+        public List<int> ListeBijoux;
+
+        public Etat(int pos, objetCase etat, List<int> poussieres, List<int> bijoux)
         {
             Position = pos;
             EtatPiece = etat;
-            NbPoussiere = nbPoussiere;
+            ListePoussiere = poussieres;
+            ListeBijoux = bijoux;
         }
         
     }
@@ -37,6 +40,8 @@ namespace Aspirateur
  
         // Liste des enfants du noeud
         private List<Noeud> _listeEnfants;
+        
+        // 
         
         // Profondeur
         public int Profondeur { get; set; }
@@ -61,6 +66,7 @@ namespace Aspirateur
             Parent = parent;
             _listeEnfants = new List<Noeud>();
             ActionParent = action;
+            Heuristique = -1;
             if (parent != null)
             {
                 Profondeur = Parent.Profondeur + 1;
@@ -111,7 +117,7 @@ namespace Aspirateur
          *  - <(x, VIDE), DROITE> -> (x+1, objetCase[x+1])
          * Les autres possibilités sont illégales.
          */
-        public List<Noeud> FonctionSuccession(int[] carte)
+        public List<Noeud> FonctionSuccession()
         {
             List<Noeud> successeurs = new List<Noeud>();
             Etat etat;
@@ -120,27 +126,36 @@ namespace Aspirateur
             {
                 case objetCase.BIJOUX:
                 {
+                    List<int> listeBijoux = new List<int>(EtatNoeud.ListeBijoux);
+                    listeBijoux.Remove(EtatNoeud.Position);
                     etat = new Etat(EtatNoeud.Position,
-                                 objetCase.VIDE,
-                                 EtatNoeud.NbPoussiere);
+                        objetCase.VIDE,
+                        EtatNoeud.ListePoussiere,
+                        listeBijoux);
                     noeud = new Noeud(etat, this, Action.RAMASSER);
                     successeurs.Add(noeud);
                     break;
                 }
                 case objetCase.POUSSIEREBIJOUX:
                 {
+                    List<int> listeBijoux = new List<int>(EtatNoeud.ListeBijoux);
+                    listeBijoux.Remove(EtatNoeud.Position);
                     etat = new Etat(EtatNoeud.Position,
-                                 objetCase.POUSSIERE,
-                                 EtatNoeud.NbPoussiere);
+                        objetCase.POUSSIERE,
+                        EtatNoeud.ListePoussiere,
+                        listeBijoux);
                     noeud = new Noeud(etat, this, Action.RAMASSER);
                     successeurs.Add(noeud);
                     break;
                 }
                 case objetCase.POUSSIERE:
                 {
+                    List<int> listePoussiere = new List<int>(EtatNoeud.ListePoussiere);
+                    listePoussiere.Remove(EtatNoeud.Position);
                     etat = new Etat(EtatNoeud.Position,
-                                 objetCase.VIDE,
-                                 EtatNoeud.NbPoussiere - 1);
+                        objetCase.VIDE,
+                        listePoussiere,
+                        EtatNoeud.ListeBijoux);
                     noeud = new Noeud(etat, this, Action.ASPIRER);
                     successeurs.Add(noeud);
                     break;
@@ -150,9 +165,17 @@ namespace Aspirateur
                     // Haut
                     if (EtatNoeud.Position >= 10)
                     {
-                        etat = new Etat(EtatNoeud.Position - 10,
-                                     (objetCase) carte[EtatNoeud.Position - 10],
-                                     EtatNoeud.NbPoussiere);
+                        int pos = EtatNoeud.Position - 10;
+                        objetCase piece = objetCase.VIDE;
+                        
+                        if(EtatNoeud.ListePoussiere.Exists(x => x == pos) && EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.POUSSIEREBIJOUX;}
+                        else if (EtatNoeud.ListePoussiere.Exists(x => x == pos)) {piece = objetCase.POUSSIERE;}
+                        else if (EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.BIJOUX;}
+                        
+                        etat = new Etat(pos,
+                            piece,
+                            EtatNoeud.ListePoussiere,
+                            EtatNoeud.ListeBijoux);
                         noeud = new Noeud(etat, this, Action.HAUT);
                         successeurs.Add(noeud);
                     }
@@ -160,9 +183,17 @@ namespace Aspirateur
                     // Bas
                     if (EtatNoeud.Position < 90)
                     {
-                        etat = new Etat(EtatNoeud.Position + 10,
-                                     (objetCase) carte[EtatNoeud.Position + 10],
-                                     EtatNoeud.NbPoussiere);
+                        int pos = EtatNoeud.Position + 10;
+                        objetCase piece = objetCase.VIDE;
+                        
+                        if(EtatNoeud.ListePoussiere.Exists(x => x == pos) && EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.POUSSIEREBIJOUX;}
+                        else if (EtatNoeud.ListePoussiere.Exists(x => x == pos)) {piece = objetCase.POUSSIERE;}
+                        else if (EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.BIJOUX;}
+                        
+                        etat = new Etat(pos,
+                            piece,
+                            EtatNoeud.ListePoussiere,
+                            EtatNoeud.ListeBijoux);
                         noeud = new Noeud(etat, this, Action.BAS);
                         successeurs.Add(noeud);
                     }
@@ -170,9 +201,17 @@ namespace Aspirateur
                     // Gauche
                     if ((EtatNoeud.Position % 10) != 0)
                     {
-                        etat = new Etat(EtatNoeud.Position - 1,
-                                     (objetCase) carte[EtatNoeud.Position - 1],
-                                     EtatNoeud.NbPoussiere);
+                        int pos = EtatNoeud.Position - 1;
+                        objetCase piece = objetCase.VIDE;
+                        
+                        if(EtatNoeud.ListePoussiere.Exists(x => x == pos) && EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.POUSSIEREBIJOUX;}
+                        else if (EtatNoeud.ListePoussiere.Exists(x => x == pos)) {piece = objetCase.POUSSIERE;}
+                        else if (EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.BIJOUX;}
+                        
+                        etat = new Etat(pos,
+                            piece,
+                            EtatNoeud.ListePoussiere,
+                            EtatNoeud.ListeBijoux);
                         noeud = new Noeud(etat, this, Action.GAUCHE);
                         successeurs.Add(noeud);
                     }
@@ -180,9 +219,17 @@ namespace Aspirateur
                     // Droite
                     if (((EtatNoeud.Position + 1) % 10) != 0)
                     {
-                        etat = new Etat(EtatNoeud.Position + 1,
-                                     (objetCase) carte[EtatNoeud.Position + 1],
-                                     EtatNoeud.NbPoussiere);
+                        int pos = EtatNoeud.Position + 1;
+                        objetCase piece = objetCase.VIDE;
+                        
+                        if(EtatNoeud.ListePoussiere.Exists(x => x == pos) && EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.POUSSIEREBIJOUX;}
+                        else if (EtatNoeud.ListePoussiere.Exists(x => x == pos)) {piece = objetCase.POUSSIERE;}
+                        else if (EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.BIJOUX;}
+                        
+                        etat = new Etat(pos,
+                            piece,
+                            EtatNoeud.ListePoussiere,
+                            EtatNoeud.ListeBijoux);
                         noeud = new Noeud(etat, this, Action.DROITE);
                         successeurs.Add(noeud);
                     }
@@ -192,6 +239,14 @@ namespace Aspirateur
             }
             return successeurs;
         }
+
+        public override string ToString()
+        {
+            return "[noeud(" + EtatNoeud.EtatPiece + ", " + EtatNoeud.Position + ", " +
+                   EtatNoeud.ListePoussiere +"), coût("+ CoutChemin +"), heuristique(" + 
+                   Heuristique + ")]";
+        }
+
     }
  
     // Graphe pour l'exploration

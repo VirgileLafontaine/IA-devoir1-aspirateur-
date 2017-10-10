@@ -53,7 +53,7 @@ namespace Aspirateur
             Thread threadEnv = new Thread(env.run);
 
             //création de l'agent dans l'environnement et de son thread dédié
-            Agent agent = new Agent(env, AlgoExploration.LARGEUR);
+            Agent agent = new Agent(env, AlgoExploration.ASTAR);
             Thread threadAgent = new Thread(agent.Lancer);
             //démarrage du thread environnement et agent
             threadEnv.Start();
