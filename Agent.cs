@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections;
-using System.ComponentModel;
-using System.Diagnostics;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Aspirateur
 {
@@ -33,15 +33,12 @@ namespace Aspirateur
         /*---------------------------------*/
         /*             Desires             */
         /*---------------------------------*/
-        // TO DO : je pense qu'il faudra remodeler les désirs pour les mettre sous forme de fonctions afin de les utiliser directement pour choisir un plan d'action parmi ceux possibles
-            
-        // 1. Maximiser le nombre de poussières aspirées
-        public int NbPoussieres = 0;
-            
-        // 2. Ajouter une règle interdisant d'aspirer un bijou
-        public int NbBijouxAspires = 0;
-            
-        // 3. Minimiser le coût du plan d'action MAIS impossible car en fait unplan d'action a un coût constant = nb d'actions (à mettre dans le rapport)
+        // Objectif : aspirer toutes les poussières
+        // L'objectif est formulé sous la forme d'une fonction de test de but
+        public bool TestBut(Etat etat)
+        {
+            return etat.ListePoussiere.Count == 0;
+        }
 
         // Constructeur du BDI
         public Bdi()
@@ -66,23 +63,23 @@ namespace Aspirateur
     public class Effecteurs
     {
         //tuple message
-        Tuple<Action, int> message;
+        Tuple<Action, int> _message;
         // Effecteur ASPIRER
         public void Aspirer(int position, Environnement env)
         {
-            Console.WriteLine("Effecteur aspirer");
+            // Console.WriteLine("Effecteur aspirer");
             // Notifier l'environnement qu'on aspire la pièce X
-            message = Tuple.Create<Action, int>(Action.ASPIRER, position);
-            Environnement.fileAction.Enqueue(message);
+            _message = Tuple.Create(Action.ASPIRER, position);
+            Environnement.fileAction.Enqueue(_message);
         }
     
         // Effecteur RAMASSER
         public void Ramasser(int position, Environnement env)
         {
-            Console.WriteLine("Effecteur ramasser");
+            // Console.WriteLine("Effecteur ramasser");
             // Notifier l'environnement qu'on ramasse un bijou dans la pièce X
-            message = Tuple.Create<Action, int>(Action.RAMASSER, position);
-            Environnement.fileAction.Enqueue(message);
+            _message = Tuple.Create(Action.RAMASSER, position);
+            Environnement.fileAction.Enqueue(_message);
         }
     
         //Effecteurs de déplacement : HAUT, BAS, DROITE, GAUCHE
@@ -90,28 +87,28 @@ namespace Aspirateur
         //                 position en cas d'erreur (mouvement impossible)
         public int Haut(int position)
         {
-            Console.WriteLine("Effecteur haut");
+            // Console.WriteLine("Effecteur haut");
             if (position >= 10) return position - 10;
             else return position;
         }
     
         public int Bas(int position)
         {
-            Console.WriteLine("Effecteur bas");
+            // Console.WriteLine("Effecteur bas");
             if (position < 90) return position + 10;
             else return position;
         }
     
         public int Gauche(int position)
         {
-            Console.WriteLine("Effecteur gauche");
+            // Console.WriteLine("Effecteur gauche");
             if ((position % 10) != 0) return position - 1;
             else return position;
         }
     
         public int Droite(int position)
         {
-            Console.WriteLine("Effecteur droite");
+            // Console.WriteLine("Effecteur droite");
             if (((position + 1) % 10) != 0) return position + 1;
             else return position;
         }
@@ -124,12 +121,103 @@ namespace Aspirateur
     // - BAS : l'agent se déplace d'une case vers le bas
     // - DROITE : l'agent se déplace d'une case vers la droite
     // - GAUCHE : l'agent se déplace d'une case vers la gauche
-    public enum Action {ASPIRER, RAMASSER, HAUT, BAS, DROITE, GAUCHE, RIEN} ;
+    public enum Action {ASPIRER, RAMASSER, HAUT, BAS, DROITE, GAUCHE, RIEN}
 
     // NOTE : je pense qu'il faut mettre l'environnement en classe statique (une seule instance modifiée par des appels de méthode static)
+    
+    // Algorithmes d'exploration disponibles
+    public enum AlgoExploration {LARGEUR, ASTAR}
 
-    public class Agent
+    public abstract class Exploration
     {
+        protected List<Etat> DejaVisites = new List<Etat>();
+        
+        // Insère le noeud dans la frange, représentée sous forme de liste
+        protected abstract List<Noeud> InsererNoeud(List<Noeud> frange, Noeud noeud);
+        
+        // Fonction générique d'exploration
+        // Retourne null en cas d'erreur
+        public Queue Explorer(Etat etatInitial, int[] bdiCarte, Func<Etat, bool> testBut)
+        {
+            /* Création du graphe */
+            Graphe arbreRecherche = new Graphe(etatInitial);
+            
+            /* Initialisation de la frange */
+            List<Noeud> frange = new List<Noeud> {arbreRecherche.Racine};
+
+            /* Boucle de construction de la frange */
+            // En cas d'échec, retourne un plan d'action vide
+            while (true)
+            {
+                // Cas d'échec
+                if (frange.Count == 0) return null;
+                
+                // Test de but
+                Noeud noeud = frange.First();
+                frange.Remove(frange.First());
+                if (testBut(noeud.EtatNoeud)) return arbreRecherche.SequenceActions(noeud);
+                
+                // Expansion du noeud
+                DejaVisites.Add(noeud.EtatNoeud);
+                foreach (Noeud n in noeud.FonctionSuccession())
+                {
+                    frange = InsererNoeud(frange, n);
+                    noeud.AjouterEnfant(n);
+                }
+            }
+        }
+    }
+    
+    public class RechercheEnLargeur : Exploration
+    {
+        protected override List<Noeud> InsererNoeud(List<Noeud> frange, Noeud noeud)
+        {
+            if (!DejaVisites.Exists(n => n.Equals(noeud.EtatNoeud))) {frange.Add(noeud);}
+            return frange;
+        }
+    }
+    
+    public class Astar : Exploration {
+
+        private int DistanceManhattan(int pos1, int pos2)
+        {
+            return Math.Abs(pos1 % 10 - pos2 % 10) + Math.Abs(pos1 / 10 - pos2 / 10);
+        }
+        
+        private int CalculHeuristique(Noeud noeud)
+        {
+            int max = 0;
+            foreach(int x in noeud.EtatNoeud.ListePoussiere)
+            {
+                int distance = DistanceManhattan(noeud.EtatNoeud.Position,x);
+                if (distance > max)
+                {
+                    max = distance;
+                }
+            }
+            return max + noeud.EtatNoeud.ListePoussiere.Count;
+        }
+        
+        private static int ComparaisonAStar(Noeud n1, Noeud n2)
+        {
+            int evaluationN1 = n1.Heuristique + n1.CoutChemin;
+            int evaluationN2 = n2.Heuristique + n2.CoutChemin;
+            return evaluationN1.CompareTo(evaluationN2);
+        }
+        
+        protected override List<Noeud> InsererNoeud(List<Noeud> frange, Noeud noeud)
+        {
+            noeud.Heuristique = CalculHeuristique(noeud);
+            frange.Add(noeud);
+            frange.Sort(ComparaisonAStar);
+            return frange;
+        }
+    }
+    
+    public class Agent
+    { 
+        /* Exploration */
+        private Exploration _exploration;
         
         /* BDI */
         private Bdi _bdi= new Bdi();
@@ -143,13 +231,23 @@ namespace Aspirateur
         private volatile Boolean _enVie = true;
 
         /* Constructeur a utiliser pour placer un agent dans un environnement*/
-        public Agent(Environnement env)
+        public Agent(Environnement env, AlgoExploration exploration)
         {
             _environnement = env;
+
+            switch (exploration)
+            {
+                case AlgoExploration.LARGEUR:
+                    _exploration = new RechercheEnLargeur();
+                    break;
+                case AlgoExploration.ASTAR:
+                    _exploration = new Astar();
+                    break;
+            }
         }
 
         /* Dois s'arreter */
-        public void arret()
+        public void Arret()
         {
             _enVie = false;
         }
@@ -195,12 +293,17 @@ namespace Aspirateur
 
         private void EtablirPlanDAction()
         {
-            _bdi.PlanDAction.Enqueue(Action.ASPIRER);
-            _bdi.PlanDAction.Enqueue(Action.DROITE);
-            _bdi.PlanDAction.Enqueue(Action.GAUCHE);
-            _bdi.PlanDAction.Enqueue(Action.BAS);
-            _bdi.PlanDAction.Enqueue(Action.HAUT);
-            _bdi.PlanDAction.Enqueue(Action.RAMASSER);
+            /* Calcul du nombre de poussières */
+            List<int> poussieres = new List<int>();
+            List<int> bijoux = new List<int>();
+            for(int i = 0; i < 100; i++)
+            {
+                if(_bdi.Carte[i] == (int) objetCase.POUSSIERE || _bdi.Carte[i] == (int) objetCase.POUSSIEREBIJOUX) {poussieres.Add(i);}
+                if(_bdi.Carte[i] == (int) objetCase.BIJOUX || _bdi.Carte[i] == (int) objetCase.POUSSIEREBIJOUX) {bijoux.Add(i);}
+            }
+            
+            Etat etatInitial = new Etat(_bdi.Position,(objetCase) _bdi.Carte[_bdi.Position], poussieres, bijoux);
+            _bdi.PlanDAction = _exploration.Explorer(etatInitial, _bdi.Carte, _bdi.TestBut);
         }
 
         private void ExecutionPlanDAction()
