@@ -49,8 +49,9 @@ namespace Aspirateur
             int fps = 60;
             double frequencePoussiereFrame = 0.01;
             double frequenceBijouxFrame = 0.001;
+
             //choix de l'agloritme exploration : ASTAR | LARGEUR
-            AlgoExploration algoExp = AlgoExploration.LARGEUR;
+            AlgoExploration algoExp = AlgoExploration.ASTAR;
 
             //variables temporelles pour le rafraichissement (delta time = time - time2)
             long time = time = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
@@ -100,7 +101,6 @@ namespace Aspirateur
                     if (frequencePoussiereFrame > rand.NextDouble())
                     {
                         env.EventCreerPoussiere();
-                        
                     }
                     else if (frequenceBijouxFrame > rand.NextDouble())
                     {

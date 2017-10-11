@@ -35,11 +35,13 @@ namespace Aspirateur
         /*---------------------------------*/
         // Objectif : aspirer toutes les poussières
         // L'objectif est formulé sous la forme d'une fonction de test de but
-        public bool TestBut(Etat etat)
+        public bool TestBut(Etat etat,Etat etatInitial)
         {
-            return etat.ListePoussiere.Count == 0;
+            return (etat.ListePoussiere.Count == etatInitial.ListePoussiere.Count-1 
+                    || etat.ListeBijoux.Count == etatInitial.ListeBijoux.Count - 1
+                    || etat.ListePoussiere.Count == 0);
         }
-
+        
         // Constructeur du BDI
         public Bdi()
         {
@@ -49,7 +51,7 @@ namespace Aspirateur
             PlanDAction = new Queue();
         }
     }
-
+    
     /* Capteur */
     public class CapteurObservation
     {
@@ -137,7 +139,7 @@ namespace Aspirateur
         
         // Fonction générique d'exploration
         // Retourne null en cas d'erreur
-        public Queue Explorer(Etat etatInitial, int[] bdiCarte, Func<Etat, bool> testBut)
+        public Queue Explorer(Etat etatInitial, int[] bdiCarte, Func<Etat,Etat, bool> testBut)
         {
             /* Création du graphe */
             Graphe arbreRecherche = new Graphe(etatInitial);
@@ -154,8 +156,8 @@ namespace Aspirateur
                 
                 // Test de but
                 Noeud noeud = frange.First();
-                frange.Remove(frange.First());
-                if (testBut(noeud.EtatNoeud)) return arbreRecherche.SequenceActions(noeud);
+                frange.RemoveAt(0);
+                if (testBut(noeud.EtatNoeud,etatInitial)) return arbreRecherche.SequenceActions(noeud);
                 
                 // Expansion du noeud
                 DejaVisites.Add(noeud.EtatNoeud);
@@ -166,6 +168,7 @@ namespace Aspirateur
                 }
             }
         }
+        
     }
     
     public class RechercheEnLargeur : Exploration
@@ -229,7 +232,8 @@ namespace Aspirateur
         Environnement _environnement;
         /*estEnVie */
         private volatile Boolean _enVie = true;
-
+        /*temps par action*/
+        int vitesse = 3;
         /* Constructeur a utiliser pour placer un agent dans un environnement*/
         public Agent(Environnement env, AlgoExploration exploration)
         {
@@ -333,8 +337,9 @@ namespace Aspirateur
                         break;
                     case (int) Action.DROITE:
                         _bdi.Position = _effecteurs.Droite(_bdi.Position);
-                        break;  
-                }   
+                        break;
+                }
+                System.Threading.Thread.Sleep(1000/vitesse);
             }
         }
 

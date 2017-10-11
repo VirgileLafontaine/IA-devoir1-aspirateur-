@@ -41,7 +41,6 @@ namespace Aspirateur
         // Liste des enfants du noeud
         private List<Noeud> _listeEnfants;
         
-        // 
         
         // Profondeur
         public int Profondeur { get; set; }
@@ -80,6 +79,11 @@ namespace Aspirateur
             }
         }
  
+        public Noeud copie()
+        {
+            return new Noeud(EtatNoeud,Parent,ActionParent);
+        }
+        
         // Le nombre d'enfants du noeud
         public int NbEnfants
         {

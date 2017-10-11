@@ -24,7 +24,7 @@ namespace Aspirateur
         private int mesurePerformance = 0;
         private int malusApparitionPousiere = 1;
         private int malusApparitionBijoux = 10;
-        private int malusAspirationBijoux = 100;
+        private int malusAspirationBijoux = 100000;
 
         ///variable d'arret du thread
         private volatile bool doisArreter = false;
