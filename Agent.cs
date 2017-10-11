@@ -337,5 +337,14 @@ namespace Aspirateur
                 }   
             }
         }
+
+        /* ------------------------------------------ */
+        /*             Fonctions publiques            */
+        /* ------------------------------------------ */
+
+        public int getPosition()
+        {
+            return this._bdi.Position;
+        }
     }
 }
