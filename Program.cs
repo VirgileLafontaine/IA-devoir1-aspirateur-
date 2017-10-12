@@ -33,7 +33,8 @@ namespace Aspirateur
             Console.WriteLine(  "\n nombre de poussieres : " + carte.Count(j => j == 1) + "\n"
                                 + "nombre de bijoux : " + carte.Count(j => j == 2)+ "\n"
                                 + "nombre de pousiere et bijoux : " + carte.Count(j => j == 3) + "\n"
-                                + "mesure d'evalutaion : " + env.getMesurePerformance());
+                                + "mesure d'evaluation : " + env.getMesurePerformance() + "\n"
+                                + "nbAction : " + agent.getNBAction());
             Console.SetCursorPosition(0, 20);
         }
 
@@ -47,11 +48,11 @@ namespace Aspirateur
             
             //frequence rafraichissement console et apparission poussières et bijoux
             int fps = 60;
-            double frequencePoussiereFrame = 0.01;
-            double frequenceBijouxFrame = 0.001;
+            double frequencePoussiereFrame = 0.02;
+            double frequenceBijouxFrame = 0.005;
 
             //choix de l'agloritme exploration : ASTAR | LARGEUR
-            AlgoExploration algoExp = AlgoExploration.ASTAR;
+            AlgoExploration algoExp = AlgoExploration.LARGEUR;
 
             //variables temporelles pour le rafraichissement (delta time = time - time2)
             long time = time = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;

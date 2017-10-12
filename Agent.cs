@@ -37,17 +37,17 @@ namespace Aspirateur
         // L'objectif est formulé sous la forme d'une fonction de test de but
         public bool TestBut(Etat etat,Etat etatInitial)
         {
-            return (etat.ListePoussiere.Count == etatInitial.ListePoussiere.Count-1 
-                    || etat.ListeBijoux.Count == etatInitial.ListeBijoux.Count - 1
-                    || etat.ListePoussiere.Count == 0);
+            return (etat.ListePoussiere.Count() < etatInitial.ListePoussiere.Count()
+                    || etat.ListeBijoux.Count() < etatInitial.ListeBijoux.Count()
+                    || etat.ListePoussiere.Count() == 0);
         }
         
         // Constructeur du BDI
         public Bdi()
         {
             Carte = new int[100];
-            Position = 0;
-            NbActions = 1;
+            Position = 45;
+            NbActions = 20;
             PlanDAction = new Queue();
         }
     }
@@ -58,6 +58,10 @@ namespace Aspirateur
         public int[] ObserverCarte(Environnement env)
         {
             return env.getCarte();
+        }
+        public int ObserverPerformance(Environnement env)
+        {
+            return env.getMesurePerformance();
         }
     }
 
@@ -139,7 +143,7 @@ namespace Aspirateur
         
         // Fonction générique d'exploration
         // Retourne null en cas d'erreur
-        public Queue Explorer(Etat etatInitial, int[] bdiCarte, Func<Etat,Etat, bool> testBut)
+        public Queue Explorer(Etat etatInitial, Func<Etat,Etat, bool> testBut)
         {
             /* Création du graphe */
             Graphe arbreRecherche = new Graphe(etatInitial);
@@ -198,7 +202,7 @@ namespace Aspirateur
                     max = distance;
                 }
             }
-            return max + noeud.EtatNoeud.ListePoussiere.Count;
+            return max + noeud.EtatNoeud.ListePoussiere.Count + noeud.EtatNoeud.ListeBijoux.Count;
         }
         
         private static int ComparaisonAStar(Noeud n1, Noeud n2)
@@ -221,7 +225,6 @@ namespace Aspirateur
     { 
         /* Exploration */
         private Exploration _exploration;
-        
         /* BDI */
         private Bdi _bdi= new Bdi();
         /* Capteur */
@@ -233,7 +236,14 @@ namespace Aspirateur
         /*estEnVie */
         private volatile Boolean _enVie = true;
         /*temps par action*/
-        int vitesse = 3;
+        private int vitesse = 6;
+        /*variables apprentissage */
+        private int dernierPerf = 0;
+        private List<int> deltaPerformances = new List<int>();
+        private int tailleListePerf = 10;
+        private bool deltaNbAction = false;
+        private double alpha = 1; //facteur de prise en compte des anciens deltaPerf
+        private double seuil = 3; // seuil de variation pour déclencher une modification de nbaction
         /* Constructeur a utiliser pour placer un agent dans un environnement*/
         public Agent(Environnement env, AlgoExploration exploration)
         {
@@ -275,6 +285,8 @@ namespace Aspirateur
                 // Exécution du plan d'action
                 ExecutionPlanDAction();
 
+                //apprentissage
+                miseAJourNBAction();
             }
             Console.WriteLine("thread agent : arrêt");
         }
@@ -291,8 +303,6 @@ namespace Aspirateur
         {
             // Actualiser la carte
             Array.Copy(carteObservee,_bdi.Carte,100);
-            
-            // Apprentissage : actualiser NbActions
         }
 
         private void EtablirPlanDAction()
@@ -307,17 +317,25 @@ namespace Aspirateur
             }
             
             Etat etatInitial = new Etat(_bdi.Position,(objetCase) _bdi.Carte[_bdi.Position], poussieres, bijoux);
-            _bdi.PlanDAction = _exploration.Explorer(etatInitial, _bdi.Carte, _bdi.TestBut);
+            _bdi.PlanDAction = _exploration.Explorer(etatInitial, _bdi.TestBut);
         }
 
         private void ExecutionPlanDAction()
         {
+            //booléen pour stopper le plan en cours
+            bool stop = false;
+            int cpt = 0;
             // Actualiser le coût
             _bdi.Cout+= _bdi.PlanDAction.Count;
             
             // Exécution des actions
-            while (_bdi.PlanDAction.Count != 0)
+            while (_bdi.PlanDAction.Count != 0 && !stop)
             {
+                cpt++;
+                if (cpt == _bdi.NbActions)
+                {
+                    stop = true;
+                }
                 switch ((int) _bdi.PlanDAction.Dequeue())
                 {
                     case (int) Action.ASPIRER:
@@ -339,10 +357,36 @@ namespace Aspirateur
                         _bdi.Position = _effecteurs.Droite(_bdi.Position);
                         break;
                 }
-                System.Threading.Thread.Sleep(1000/vitesse);
+                if (_bdi.PlanDAction.Count != 0) { System.Threading.Thread.Sleep(1000 / vitesse); };
             }
         }
 
+        //fonction d'apprentissage
+        private void miseAJourNBAction()
+        {
+            if (deltaPerformances.Count == tailleListePerf)
+            {
+                deltaPerformances.RemoveAt(tailleListePerf-1);
+            }
+            int tempPerf = _capteur.ObserverPerformance(_environnement);
+            deltaPerformances.Insert(0, tempPerf-dernierPerf);
+            dernierPerf = tempPerf;
+            double somme = 0;
+            for (int i = 0; i < deltaPerformances.Count; i++)
+            {
+                somme += (double)deltaPerformances[i] / (alpha * Math.Exp((double)i));
+            }
+            if (deltaPerformances.Count == 1) { _bdi.NbActions--; }
+            else if (somme < 0 && Math.Abs(somme)>seuil)
+            {
+                if (deltaNbAction) { _bdi.NbActions++; }
+                else { _bdi.NbActions--; }
+            }else if (somme > 0 && Math.Abs(somme) > seuil)
+            {
+                if (deltaNbAction) { _bdi.NbActions--;deltaNbAction = false; }
+                else { _bdi.NbActions++;deltaNbAction = true; }
+            }
+        }
         /* ------------------------------------------ */
         /*             Fonctions publiques            */
         /* ------------------------------------------ */
@@ -350,6 +394,10 @@ namespace Aspirateur
         public int getPosition()
         {
             return this._bdi.Position;
+        }
+        public int getNBAction()
+        {
+            return this._bdi.NbActions;
         }
     }
 }
