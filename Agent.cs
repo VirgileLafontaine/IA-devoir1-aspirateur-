@@ -47,7 +47,7 @@ namespace Aspirateur
         {
             Carte = new int[100];
             Position = 45;
-            NbActions = 20;
+            NbActions = 10;
             PlanDAction = new Queue();
         }
     }
@@ -143,13 +143,14 @@ namespace Aspirateur
         
         // Fonction générique d'exploration
         // Retourne null en cas d'erreur
-        public Queue Explorer(Etat etatInitial, Func<Etat,Etat, bool> testBut)
+        public Queue Explorer(Etat etatInitial,int nbAction, Func<Etat,Etat, bool> testBut)
         {
             /* Création du graphe */
             Graphe arbreRecherche = new Graphe(etatInitial);
             
             /* Initialisation de la frange */
             List<Noeud> frange = new List<Noeud> {arbreRecherche.Racine};
+            
 
             /* Boucle de construction de la frange */
             // En cas d'échec, retourne un plan d'action vide
@@ -161,8 +162,8 @@ namespace Aspirateur
                 // Test de but
                 Noeud noeud = frange.First();
                 frange.RemoveAt(0);
-                if (testBut(noeud.EtatNoeud,etatInitial)) return arbreRecherche.SequenceActions(noeud);
-                
+                if (testBut(noeud.EtatNoeud,etatInitial) || noeud.Profondeur == nbAction) return arbreRecherche.SequenceActions(noeud);
+
                 // Expansion du noeud
                 DejaVisites.Add(noeud.EtatNoeud);
                 foreach (Noeud n in noeud.FonctionSuccession())
@@ -193,16 +194,22 @@ namespace Aspirateur
         
         private int CalculHeuristique(Noeud noeud)
         {
-            int max = 0;
+            int min = 200;
+            
             foreach(int x in noeud.EtatNoeud.ListePoussiere)
             {
                 int distance = DistanceManhattan(noeud.EtatNoeud.Position,x);
-                if (distance > max)
+                if (distance < min)
                 {
-                    max = distance;
+                    min = distance;
                 }
             }
-            return max + noeud.EtatNoeud.ListePoussiere.Count + noeud.EtatNoeud.ListeBijoux.Count;
+            if (noeud.ActionParent == Action.ASPIRER){
+                min = 0;
+            }
+            
+            
+            return min + noeud.EtatNoeud.ListePoussiere.Count + noeud.EtatNoeud.ListeBijoux.Count;
         }
         
         private static int ComparaisonAStar(Noeud n1, Noeud n2)
@@ -236,7 +243,7 @@ namespace Aspirateur
         /*estEnVie */
         private volatile Boolean _enVie = true;
         /*temps par action*/
-        private int vitesse = 6;
+        private int vitesse = 10;
         /*variables apprentissage */
         private int dernierPerf = 0;
         private List<int> deltaPerformances = new List<int>();
@@ -270,7 +277,6 @@ namespace Aspirateur
         /* ------------------------------------------ */
         public void Lancer()
         {
-            Console.WriteLine("thread agent : démarrage");
             while (JeSuisEnVie())
             {
                 // Observer l'environnement avec mes capteurs
@@ -317,7 +323,7 @@ namespace Aspirateur
             }
             
             Etat etatInitial = new Etat(_bdi.Position,(objetCase) _bdi.Carte[_bdi.Position], poussieres, bijoux);
-            _bdi.PlanDAction = _exploration.Explorer(etatInitial, _bdi.TestBut);
+            _bdi.PlanDAction = _exploration.Explorer(etatInitial, _bdi.NbActions, _bdi.TestBut);
         }
 
         private void ExecutionPlanDAction()
@@ -357,7 +363,7 @@ namespace Aspirateur
                         _bdi.Position = _effecteurs.Droite(_bdi.Position);
                         break;
                 }
-                if (_bdi.PlanDAction.Count != 0) { System.Threading.Thread.Sleep(1000 / vitesse); };
+                System.Threading.Thread.Sleep(1000 / vitesse);
             }
         }
 
@@ -380,11 +386,16 @@ namespace Aspirateur
             else if (somme < 0 && Math.Abs(somme)>seuil)
             {
                 if (deltaNbAction) { _bdi.NbActions++; }
-                else { _bdi.NbActions--; }
+                else {
+                    if (_bdi.NbActions > 1) { _bdi.NbActions--; }
+                    }
             }else if (somme > 0 && Math.Abs(somme) > seuil)
             {
-                if (deltaNbAction) { _bdi.NbActions--;deltaNbAction = false; }
-                else { _bdi.NbActions++;deltaNbAction = true; }
+                if (deltaNbAction)
+                {
+                    if (_bdi.NbActions > 1) { _bdi.NbActions--; deltaNbAction = false; }
+                }
+                else { _bdi.NbActions++; deltaNbAction = true; }
             }
         }
         /* ------------------------------------------ */

@@ -78,14 +78,17 @@ namespace Aspirateur
                 while (fileAction.Count != 0)
                 {
                     message = (Tuple<Action, int>)fileAction.Dequeue();
-                    switch (message.Item1)
+                    if (message != null)
                     {
-                        case Action.ASPIRER:
-                            Aspirer(message.Item2);
-                            break;
-                        case Action.RAMASSER:
-                            Ramasser(message.Item2);
-                            break;
+                        switch (message.Item1)
+                        {
+                            case Action.ASPIRER:
+                                Aspirer(message.Item2);
+                                break;
+                            case Action.RAMASSER:
+                                Ramasser(message.Item2);
+                                break;
+                        }
                     }
                 }
             }

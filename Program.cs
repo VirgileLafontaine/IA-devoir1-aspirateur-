@@ -48,11 +48,11 @@ namespace Aspirateur
             
             //frequence rafraichissement console et apparission poussières et bijoux
             int fps = 60;
-            double frequencePoussiereFrame = 0.02;
+            double frequencePoussiereFrame = 0.03;
             double frequenceBijouxFrame = 0.005;
 
             //choix de l'agloritme exploration : ASTAR | LARGEUR
-            AlgoExploration algoExp = AlgoExploration.LARGEUR;
+            AlgoExploration algoExp = AlgoExploration.ASTAR;
 
             //variables temporelles pour le rafraichissement (delta time = time - time2)
             long time = time = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
