@@ -30,11 +30,13 @@ namespace Aspirateur
                 }
                 i++;
             }
-            Console.WriteLine(  "\n nombre de poussieres : " + carte.Count(j => j == 1) + "\n"
-                                + "nombre de bijoux : " + carte.Count(j => j == 2)+ "\n"
+            Console.Write("\n nombre de poussieres : " + carte.Count(j => j == 1) + "\n"
+                                + "nombre de bijoux : " + carte.Count(j => j == 2) + "\n"
                                 + "nombre de pousiere et bijoux : " + carte.Count(j => j == 3) + "\n"
                                 + "mesure d'evaluation : " + env.getMesurePerformance() + "\n"
-                                + "nbAction : " + agent.getNBAction());
+                                + "nbAction : ");
+            if (agent.getNBAction() < 10) { Console.Write("0" + agent.getNBAction()); }
+            else { Console.Write(agent.getNBAction()); }
             Console.SetCursorPosition(0, 20);
         }
 
@@ -48,8 +50,8 @@ namespace Aspirateur
             
             //frequence rafraichissement console et apparission poussières et bijoux
             int fps = 60;
-            double frequencePoussiereFrame = 0.03;
-            double frequenceBijouxFrame = 0.005;
+            double frequencePoussiereFrame = 0.12;
+            double frequenceBijouxFrame = 0.02;
 
             //choix de l'agloritme exploration : ASTAR | LARGEUR
             AlgoExploration algoExp = AlgoExploration.ASTAR;

@@ -243,14 +243,14 @@ namespace Aspirateur
         /*estEnVie */
         private volatile Boolean _enVie = true;
         /*temps par action*/
-        private int vitesse = 10;
+        private int vitesse = 40;
         /*variables apprentissage */
         private int dernierPerf = 0;
         private List<int> deltaPerformances = new List<int>();
-        private int tailleListePerf = 10;
+        private int tailleListePerf = 100;
         private bool deltaNbAction = false;
-        private double alpha = 1; //facteur de prise en compte des anciens deltaPerf
-        private double seuil = 3; // seuil de variation pour déclencher une modification de nbaction
+        private double alpha = 1.5; //facteur de non prise en compte des anciens deltaPerf
+        private double seuil = 1; // seuil de variation pour déclencher une modification de nbaction
         /* Constructeur a utiliser pour placer un agent dans un environnement*/
         public Agent(Environnement env, AlgoExploration exploration)
         {
