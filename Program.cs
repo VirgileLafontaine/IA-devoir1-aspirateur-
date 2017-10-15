@@ -9,12 +9,12 @@ namespace Aspirateur
 {
     class Program
     {
-        private void afficherCarte(int[] carte, Environnement env, Agent agent)
+        private static void AfficherCarte(int[] carte, Environnement env, Agent agent)
         {
             Console.SetCursorPosition(0,2);
 
             int i = 0;
-            int pos = agent.getPosition();
+            int pos = agent.GetPosition();
             foreach (int piece in carte){
                 if ((i > 0) && (i % 10 == 0))
                 {
@@ -30,31 +30,31 @@ namespace Aspirateur
                 }
                 i++;
             }
-            Console.Write("\n nombre de poussieres : " + carte.Count(j => j == 1) + "\n"
+            Console.Write("\nnombre de poussieres : " + carte.Count(j => j == 1) + "\n"
                                 + "nombre de bijoux : " + carte.Count(j => j == 2) + "\n"
                                 + "nombre de pousiere et bijoux : " + carte.Count(j => j == 3) + "\n"
-                                + "mesure d'evaluation : " + env.getMesurePerformance() + "\n"
+                                + "mesure d'evaluation : " + env.GetMesurePerformance() + "\n"
                                 + "nbAction : ");
-            if (agent.getNBAction() < 10) { Console.Write("0" + agent.getNBAction()); }
-            else { Console.Write(agent.getNBAction()); }
+            if (agent.GetNbAction() < 10) { Console.Write("0" + agent.GetNbAction()); }
+            else { Console.Write(agent.GetNbAction()); }
             Console.SetCursorPosition(0, 20);
         }
 
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            //instanciation du programme
+            // Instanciation du programme
             Program prog = new Program();
 
-            //touche pour fermer le programme
-            ConsoleKey exitKey = ConsoleKey.Escape;
+            // Touche mettant fin au programme
+            const ConsoleKey exitKey = ConsoleKey.Escape;
             
-            //frequence rafraichissement console et apparission poussières et bijoux
-            int fps = 60;
-            double frequencePoussiereFrame = 0.12;
-            double frequenceBijouxFrame = 0.02;
+            // Fréquences de rafraichissement console et d'apparition des poussières et bijoux
+            const int fps = 60;
+            const double frequencePoussiereFrame = 0.12;
+            const double frequenceBijouxFrame = 0.02;
 
             //choix de l'agloritme exploration : ASTAR | LARGEUR
-            AlgoExploration algoExp = AlgoExploration.ASTAR;
+            const AlgoExploration algoExp = AlgoExploration.ASTAR;
 
             //variables temporelles pour le rafraichissement (delta time = time - time2)
             long time = time = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
@@ -68,7 +68,7 @@ namespace Aspirateur
 
             //création de l'environnement et de son thread dédié
             Environnement env = new Environnement();
-            Thread threadEnv = new Thread(env.run);
+            Thread threadEnv = new Thread(env.Lancer);
 
             //création de l'agent dans l'environnement et de son thread dédié
             Agent agent = new Agent(env, algoExp);
@@ -88,8 +88,8 @@ namespace Aspirateur
             while (!threadAgent.IsAlive) ;
             
             //on charge le terrain vide
-            terrainOld = env.getCarte();
-            prog.afficherCarte(terrainOld,env,agent);
+            terrainOld = env.GetCarte();
+            AfficherCarte(terrainOld,env,agent);
            
             //cache le curseur
             Console.CursorVisible = false;
@@ -110,13 +110,13 @@ namespace Aspirateur
                         env.EventCreerBijoux();
                     }
 
-                    prog.afficherCarte(env.getCarte(),env,agent);
+                    AfficherCarte(env.GetCarte(),env,agent);
                     time = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
                 }
             }
 
             //arret du thread environnement de par lui même
-            env.arret();
+            env.Arret();
 
             //attente de la fin du thread environnement
             threadEnv.Join();

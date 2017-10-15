@@ -10,13 +10,13 @@ namespace Aspirateur
     {
         public int Position { get; set; }
         
-        public objetCase EtatPiece { get; set; }
+        public ObjetCase EtatPiece { get; set; }
 
         public List<int> ListePoussiere;
 
         public List<int> ListeBijoux;
 
-        public Etat(int pos, objetCase etat, List<int> poussieres, List<int> bijoux)
+        public Etat(int pos, ObjetCase etat, List<int> poussieres, List<int> bijoux)
         {
             Position = pos;
             EtatPiece = etat;
@@ -115,10 +115,10 @@ namespace Aspirateur
          *  - <(x, BIJOU), RAMASSER> -> (x, VIDE)
          *  - <(x, POUSSIEREBIJOU), RAMASSER> -> (x, POUSSIERE)
          *  - <(x, POUSSIERE), ASPIRER> -> (x, VIDE)
-         *  - <(x, VIDE), HAUT> -> (x-10, objetCase[x-10])
-         *  - <(x, VIDE), BAS> -> (x+10, objetCase[x+10])
-         *  - <(x, VIDE), GAUCHE> -> (x-1, objetCase[x-1])
-         *  - <(x, VIDE), DROITE> -> (x+1, objetCase[x+1])
+         *  - <(x, VIDE), HAUT> -> (x-10, ObjetCase[x-10])
+         *  - <(x, VIDE), BAS> -> (x+10, ObjetCase[x+10])
+         *  - <(x, VIDE), GAUCHE> -> (x-1, ObjetCase[x-1])
+         *  - <(x, VIDE), DROITE> -> (x+1, ObjetCase[x+1])
          * Les autres possibilités sont illégales.
          */
         public List<Noeud> FonctionSuccession()
@@ -128,53 +128,53 @@ namespace Aspirateur
             Noeud noeud;
             switch (EtatNoeud.EtatPiece)
             {
-                case objetCase.BIJOUX:
+                case ObjetCase.BIJOUX:
                 {
                     List<int> listeBijoux = new List<int>(EtatNoeud.ListeBijoux);
                     listeBijoux.Remove(EtatNoeud.Position);
                     etat = new Etat(EtatNoeud.Position,
-                        objetCase.VIDE,
+                        ObjetCase.VIDE,
                         EtatNoeud.ListePoussiere,
                         listeBijoux);
                     noeud = new Noeud(etat, this, Action.RAMASSER);
                     successeurs.Add(noeud);
                     break;
                 }
-                case objetCase.POUSSIEREBIJOUX:
+                case ObjetCase.POUSSIEREBIJOUX:
                 {
                     List<int> listeBijoux = new List<int>(EtatNoeud.ListeBijoux);
                     listeBijoux.Remove(EtatNoeud.Position);
                     etat = new Etat(EtatNoeud.Position,
-                        objetCase.POUSSIERE,
+                        ObjetCase.POUSSIERE,
                         EtatNoeud.ListePoussiere,
                         listeBijoux);
                     noeud = new Noeud(etat, this, Action.RAMASSER);
                     successeurs.Add(noeud);
                     break;
                 }
-                case objetCase.POUSSIERE:
+                case ObjetCase.POUSSIERE:
                 {
                     List<int> listePoussiere = new List<int>(EtatNoeud.ListePoussiere);
                     listePoussiere.Remove(EtatNoeud.Position);
                     etat = new Etat(EtatNoeud.Position,
-                        objetCase.VIDE,
+                        ObjetCase.VIDE,
                         listePoussiere,
                         EtatNoeud.ListeBijoux);
                     noeud = new Noeud(etat, this, Action.ASPIRER);
                     successeurs.Add(noeud);
                     break;
                 }
-                case objetCase.VIDE:
+                case ObjetCase.VIDE:
                 {
                     // Haut
                     if (EtatNoeud.Position >= 10)
                     {
                         int pos = EtatNoeud.Position - 10;
-                        objetCase piece = objetCase.VIDE;
+                        ObjetCase piece = ObjetCase.VIDE;
                         
-                        if(EtatNoeud.ListePoussiere.Exists(x => x == pos) && EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.POUSSIEREBIJOUX;}
-                        else if (EtatNoeud.ListePoussiere.Exists(x => x == pos)) {piece = objetCase.POUSSIERE;}
-                        else if (EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.BIJOUX;}
+                        if(EtatNoeud.ListePoussiere.Exists(x => x == pos) && EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = ObjetCase.POUSSIEREBIJOUX;}
+                        else if (EtatNoeud.ListePoussiere.Exists(x => x == pos)) {piece = ObjetCase.POUSSIERE;}
+                        else if (EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = ObjetCase.BIJOUX;}
                         
                         etat = new Etat(pos,
                             piece,
@@ -188,11 +188,11 @@ namespace Aspirateur
                     if (EtatNoeud.Position < 90)
                     {
                         int pos = EtatNoeud.Position + 10;
-                        objetCase piece = objetCase.VIDE;
+                        ObjetCase piece = ObjetCase.VIDE;
                         
-                        if(EtatNoeud.ListePoussiere.Exists(x => x == pos) && EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.POUSSIEREBIJOUX;}
-                        else if (EtatNoeud.ListePoussiere.Exists(x => x == pos)) {piece = objetCase.POUSSIERE;}
-                        else if (EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.BIJOUX;}
+                        if(EtatNoeud.ListePoussiere.Exists(x => x == pos) && EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = ObjetCase.POUSSIEREBIJOUX;}
+                        else if (EtatNoeud.ListePoussiere.Exists(x => x == pos)) {piece = ObjetCase.POUSSIERE;}
+                        else if (EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = ObjetCase.BIJOUX;}
                         
                         etat = new Etat(pos,
                             piece,
@@ -206,11 +206,11 @@ namespace Aspirateur
                     if ((EtatNoeud.Position % 10) != 0)
                     {
                         int pos = EtatNoeud.Position - 1;
-                        objetCase piece = objetCase.VIDE;
+                        ObjetCase piece = ObjetCase.VIDE;
                         
-                        if(EtatNoeud.ListePoussiere.Exists(x => x == pos) && EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.POUSSIEREBIJOUX;}
-                        else if (EtatNoeud.ListePoussiere.Exists(x => x == pos)) {piece = objetCase.POUSSIERE;}
-                        else if (EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.BIJOUX;}
+                        if(EtatNoeud.ListePoussiere.Exists(x => x == pos) && EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = ObjetCase.POUSSIEREBIJOUX;}
+                        else if (EtatNoeud.ListePoussiere.Exists(x => x == pos)) {piece = ObjetCase.POUSSIERE;}
+                        else if (EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = ObjetCase.BIJOUX;}
                         
                         etat = new Etat(pos,
                             piece,
@@ -224,11 +224,11 @@ namespace Aspirateur
                     if (((EtatNoeud.Position + 1) % 10) != 0)
                     {
                         int pos = EtatNoeud.Position + 1;
-                        objetCase piece = objetCase.VIDE;
+                        ObjetCase piece = ObjetCase.VIDE;
                         
-                        if(EtatNoeud.ListePoussiere.Exists(x => x == pos) && EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.POUSSIEREBIJOUX;}
-                        else if (EtatNoeud.ListePoussiere.Exists(x => x == pos)) {piece = objetCase.POUSSIERE;}
-                        else if (EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = objetCase.BIJOUX;}
+                        if(EtatNoeud.ListePoussiere.Exists(x => x == pos) && EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = ObjetCase.POUSSIEREBIJOUX;}
+                        else if (EtatNoeud.ListePoussiere.Exists(x => x == pos)) {piece = ObjetCase.POUSSIERE;}
+                        else if (EtatNoeud.ListeBijoux.Exists(x => x == pos)) {piece = ObjetCase.BIJOUX;}
                         
                         etat = new Etat(pos,
                             piece,

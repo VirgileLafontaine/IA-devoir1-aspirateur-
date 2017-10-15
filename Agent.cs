@@ -57,11 +57,11 @@ namespace Aspirateur
     {
         public int[] ObserverCarte(Environnement env)
         {
-            return env.getCarte();
+            return env.GetCarte();
         }
         public int ObserverPerformance(Environnement env)
         {
-            return env.getMesurePerformance();
+            return env.GetMesurePerformance();
         }
     }
 
@@ -76,7 +76,7 @@ namespace Aspirateur
             // Console.WriteLine("Effecteur aspirer");
             // Notifier l'environnement qu'on aspire la pièce X
             _message = Tuple.Create(Action.ASPIRER, position);
-            Environnement.fileAction.Enqueue(_message);
+            Environnement.FileAction.Enqueue(_message);
         }
     
         // Effecteur RAMASSER
@@ -85,7 +85,7 @@ namespace Aspirateur
             // Console.WriteLine("Effecteur ramasser");
             // Notifier l'environnement qu'on ramasse un bijou dans la pièce X
             _message = Tuple.Create(Action.RAMASSER, position);
-            Environnement.fileAction.Enqueue(_message);
+            Environnement.FileAction.Enqueue(_message);
         }
     
         //Effecteurs de déplacement : HAUT, BAS, DROITE, GAUCHE
@@ -231,26 +231,29 @@ namespace Aspirateur
     public class Agent
     { 
         /* Exploration */
-        private Exploration _exploration;
+        private readonly Exploration _exploration;
         /* BDI */
-        private Bdi _bdi= new Bdi();
+        private readonly Bdi _bdi= new Bdi();
         /* Capteur */
-        private CapteurObservation _capteur = new CapteurObservation();
+        private readonly CapteurObservation _capteur = new CapteurObservation();
         /* Effecteurs */
-        private Effecteurs _effecteurs = new Effecteurs();
+        private readonly Effecteurs _effecteurs = new Effecteurs();
         /* environnement lié*/
-        Environnement _environnement;
+        private readonly Environnement _environnement;
         /*estEnVie */
-        private volatile Boolean _enVie = true;
+        private volatile bool _enVie = true;
         /*temps par action*/
-        private int vitesse = 40;
+        private const int Vitesse = 40;
+
         /*variables apprentissage */
-        private int dernierPerf = 0;
-        private List<int> deltaPerformances = new List<int>();
-        private int tailleListePerf = 100;
-        private bool deltaNbAction = false;
-        private double alpha = 1.5; //facteur de non prise en compte des anciens deltaPerf
-        private double seuil = 1; // seuil de variation pour déclencher une modification de nbaction
+        private int _dernierPerf = 0;
+        private readonly List<int> _deltaPerformances = new List<int>();
+        private const int TailleListePerf = 100;
+        private bool _deltaNbAction = false;
+        private const double Alpha = 1.5; //facteur de non prise en compte des anciens deltaPerf
+
+        private const double Seuil = 1; // seuil de variation pour déclencher une modification de nbaction
+
         /* Constructeur a utiliser pour placer un agent dans un environnement*/
         public Agent(Environnement env, AlgoExploration exploration)
         {
@@ -292,7 +295,7 @@ namespace Aspirateur
                 ExecutionPlanDAction();
 
                 //apprentissage
-                miseAJourNBAction();
+                MiseAJourNbAction();
             }
             Console.WriteLine("thread agent : arrêt");
         }
@@ -318,11 +321,11 @@ namespace Aspirateur
             List<int> bijoux = new List<int>();
             for(int i = 0; i < 100; i++)
             {
-                if(_bdi.Carte[i] == (int) objetCase.POUSSIERE || _bdi.Carte[i] == (int) objetCase.POUSSIEREBIJOUX) {poussieres.Add(i);}
-                if(_bdi.Carte[i] == (int) objetCase.BIJOUX || _bdi.Carte[i] == (int) objetCase.POUSSIEREBIJOUX) {bijoux.Add(i);}
+                if(_bdi.Carte[i] == (int) ObjetCase.POUSSIERE || _bdi.Carte[i] == (int) ObjetCase.POUSSIEREBIJOUX) {poussieres.Add(i);}
+                if(_bdi.Carte[i] == (int) ObjetCase.BIJOUX || _bdi.Carte[i] == (int) ObjetCase.POUSSIEREBIJOUX) {bijoux.Add(i);}
             }
             
-            Etat etatInitial = new Etat(_bdi.Position,(objetCase) _bdi.Carte[_bdi.Position], poussieres, bijoux);
+            Etat etatInitial = new Etat(_bdi.Position,(ObjetCase) _bdi.Carte[_bdi.Position], poussieres, bijoux);
             _bdi.PlanDAction = _exploration.Explorer(etatInitial, _bdi.NbActions, _bdi.TestBut);
         }
 
@@ -363,52 +366,52 @@ namespace Aspirateur
                         _bdi.Position = _effecteurs.Droite(_bdi.Position);
                         break;
                 }
-                System.Threading.Thread.Sleep(1000 / vitesse);
+                System.Threading.Thread.Sleep(1000 / Vitesse);
             }
         }
 
         //fonction d'apprentissage
-        private void miseAJourNBAction()
+        private void MiseAJourNbAction()
         {
-            if (deltaPerformances.Count == tailleListePerf)
+            if (_deltaPerformances.Count == TailleListePerf)
             {
-                deltaPerformances.RemoveAt(tailleListePerf-1);
+                _deltaPerformances.RemoveAt(TailleListePerf-1);
             }
             int tempPerf = _capteur.ObserverPerformance(_environnement);
-            deltaPerformances.Insert(0, tempPerf-dernierPerf);
-            dernierPerf = tempPerf;
+            _deltaPerformances.Insert(0, tempPerf-_dernierPerf);
+            _dernierPerf = tempPerf;
             double somme = 0;
-            for (int i = 0; i < deltaPerformances.Count; i++)
+            for (int i = 0; i < _deltaPerformances.Count; i++)
             {
-                somme += (double)deltaPerformances[i] / (alpha * Math.Exp((double)i));
+                somme += (double)_deltaPerformances[i] / (Alpha * Math.Exp((double)i));
             }
-            if (deltaPerformances.Count == 1) { _bdi.NbActions--; }
-            else if (somme < 0 && Math.Abs(somme)>seuil)
+            if (_deltaPerformances.Count == 1) { _bdi.NbActions--; }
+            else if (somme < 0 && Math.Abs(somme)>Seuil)
             {
-                if (deltaNbAction) { _bdi.NbActions++; }
+                if (_deltaNbAction) { _bdi.NbActions++; }
                 else {
                     if (_bdi.NbActions > 1) { _bdi.NbActions--; }
                     }
-            }else if (somme > 0 && Math.Abs(somme) > seuil)
+            }else if (somme > 0 && Math.Abs(somme) > Seuil)
             {
-                if (deltaNbAction)
+                if (_deltaNbAction)
                 {
-                    if (_bdi.NbActions > 1) { _bdi.NbActions--; deltaNbAction = false; }
+                    if (_bdi.NbActions > 1) { _bdi.NbActions--; _deltaNbAction = false; }
                 }
-                else { _bdi.NbActions++; deltaNbAction = true; }
+                else { _bdi.NbActions++; _deltaNbAction = true; }
             }
         }
         /* ------------------------------------------ */
         /*             Fonctions publiques            */
         /* ------------------------------------------ */
 
-        public int getPosition()
+        public int GetPosition()
         {
-            return this._bdi.Position;
+            return _bdi.Position;
         }
-        public int getNBAction()
+        public int GetNbAction()
         {
-            return this._bdi.NbActions;
+            return _bdi.NbActions;
         }
     }
 }

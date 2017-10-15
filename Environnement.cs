@@ -1,92 +1,90 @@
 ﻿using System;
 using System.Collections;
-using System.Linq;
-using System.Text;
-using System.Threading;
 
 namespace Aspirateur
 {
     
     ///constantes des objets dans une piece, VIDE = 0, POUSSIERE = 1 ...
-    public enum objetCase { VIDE, POUSSIERE, BIJOUX, POUSSIEREBIJOUX };
+    public enum ObjetCase { VIDE, POUSSIERE, BIJOUX, POUSSIEREBIJOUX };
 
     public class Environnement
     {
         //--------------variables privées de l'environnement-------------//
         
         ///carte de l'environnement et des objets présents dans les pieces de cet environnement
-        private int[] carte = new int[100];
+        private readonly int[] _carte = new int[100];
 
         /// file d'action que l'aspirateur réalise à effectuer par l'environnement
-        public static volatile Queue fileAction = new Queue();
+        public static volatile Queue FileAction = new Queue();
 
         ///Mesure de performance, 0 = meilleur, poussiere +1, bijoux +10, aspirer bijoux +100
-        private int mesurePerformance = 0;
-        private int malusApparitionPousiere = 1;
-        private int malusApparitionBijoux = 1;
-        private int malusAspirationBijoux = 10;
+        private int _mesurePerformance = 0;
+
+        private const int MalusApparitionPousiere = 1;
+        private const int MalusApparitionBijoux = 1;
+        private const int MalusAspirationBijoux = 10;
 
         ///variable d'arret du thread
-        private volatile bool doisArreter = false;
+        private volatile bool _doisArreter = false;
 
         ///doit créer une poussière
-        private volatile bool doitCreerPoussiere = false;
+        private volatile bool _doitCreerPoussiere = false;
 
         ///doit créer un bijoux
-        private volatile bool doitCreerBijoux = false;
+        private volatile bool _doitCreerBijoux = false;
 
         ///message reçu
-        Tuple<Action, int> message;
+        private Tuple<Action, int> _message;
 
         //variable seed aléatoire
-        private Random rand;
+        private readonly Random _rand;
         //---------------------Constructeurs----------------------------//
 
         ///constructeur par défaut
         public Environnement()
         {
-            rand = new Random();
+            _rand = new Random();
         }
 
         //-----------------------getters-------------------------------//
-        public int getMesurePerformance()
+        public int GetMesurePerformance()
         {
-            return this.mesurePerformance;
+            return _mesurePerformance;
         }
 
-        public int[] getCarte()
+        public int[] GetCarte()
         {
-            return this.carte;
+            return _carte;
         }
 
         //---------------------methodes publiques--------------------//
         ///methode principale
-        public void run()
+        public void Lancer()
         {
-            while (!doisArreter)
+            while (!_doisArreter)
             {
-                if (doitCreerPoussiere)
+                if (_doitCreerPoussiere)
                 {
-                    creerPoussiere();
-                    doitCreerPoussiere = false;
+                    CreerPoussiere();
+                    _doitCreerPoussiere = false;
                 }
-                if (doitCreerBijoux)
+                if (_doitCreerBijoux)
                 {
-                    creerBijoux();
-                    doitCreerBijoux = false;
+                    CreerBijoux();
+                    _doitCreerBijoux = false;
                 }
-                while (fileAction.Count != 0)
+                while (FileAction.Count != 0)
                 {
-                    message = (Tuple<Action, int>)fileAction.Dequeue();
-                    if (message != null)
+                    _message = (Tuple<Action, int>)FileAction.Dequeue();
+                    if (_message != null)
                     {
-                        switch (message.Item1)
+                        switch (_message.Item1)
                         {
                             case Action.ASPIRER:
-                                Aspirer(message.Item2);
+                                Aspirer(_message.Item2);
                                 break;
                             case Action.RAMASSER:
-                                Ramasser(message.Item2);
+                                Ramasser(_message.Item2);
                                 break;
                         }
                     }
@@ -96,90 +94,90 @@ namespace Aspirateur
         }
 
         ///methode d'arret
-        public void arret()
+        public void Arret()
         {
-            doisArreter = true ;
+            _doisArreter = true ;
         }
 
         ///event recu de création de poussiere
         public void EventCreerPoussiere()
         {
-            doitCreerPoussiere = true;
+            _doitCreerPoussiere = true;
         }
         
         ///event recu de création de bijoux
         public void EventCreerBijoux()
         {
-            doitCreerBijoux = true;
+            _doitCreerBijoux = true;
         }
 
         
         //---------------------methodes internes-------------------//
         ///methode de création de poussiere
-        private void creerPoussiere()
+        private void CreerPoussiere()
         {
-            int aleatoire = rand.Next(100); // random 0-99
-            if (carte[aleatoire] ==(int)objetCase.VIDE)
+            int aleatoire = _rand.Next(100); // random 0-99
+            if (_carte[aleatoire] ==(int)ObjetCase.VIDE)
             {
-                carte[aleatoire] = (int)objetCase.POUSSIERE;
-                mesurePerformance += malusApparitionPousiere;
+                _carte[aleatoire] = (int)ObjetCase.POUSSIERE;
+                _mesurePerformance += MalusApparitionPousiere;
             }
-            else if (carte[aleatoire] == (int)objetCase.BIJOUX)
+            else if (_carte[aleatoire] == (int)ObjetCase.BIJOUX)
             {
-                carte[aleatoire] = (int)objetCase.POUSSIEREBIJOUX;
-                mesurePerformance += malusApparitionPousiere;
+                _carte[aleatoire] = (int)ObjetCase.POUSSIEREBIJOUX;
+                _mesurePerformance += MalusApparitionPousiere;
             }
         }
 
         ///methode de création de bijoux
-        private void creerBijoux()
+        private void CreerBijoux()
         {
-            int aleatoire = rand.Next(100); // random 0-99
-            if (carte[aleatoire] == (int)objetCase.VIDE)
+            int aleatoire = _rand.Next(100); // random 0-99
+            if (_carte[aleatoire] == (int)ObjetCase.VIDE)
             {
-                carte[aleatoire] = (int)objetCase.BIJOUX;
-                mesurePerformance += malusApparitionBijoux;
+                _carte[aleatoire] = (int)ObjetCase.BIJOUX;
+                _mesurePerformance += MalusApparitionBijoux;
             }
-            else if (carte[aleatoire] == (int)objetCase.POUSSIERE)
+            else if (_carte[aleatoire] == (int)ObjetCase.POUSSIERE)
             {
-                carte[aleatoire] = (int)objetCase.POUSSIEREBIJOUX;
-                mesurePerformance += malusApparitionBijoux;
+                _carte[aleatoire] = (int)ObjetCase.POUSSIEREBIJOUX;
+                _mesurePerformance += MalusApparitionBijoux;
             }
 
         }
         
         private void Aspirer(int position)
         {
-            if (carte[position]== (int)objetCase.BIJOUX)
+            if (_carte[position]== (int)ObjetCase.BIJOUX)
             {
-                carte[position] = (int)objetCase.VIDE;
-                mesurePerformance += malusAspirationBijoux;
+                _carte[position] = (int)ObjetCase.VIDE;
+                _mesurePerformance += MalusAspirationBijoux;
             }
-            else if (carte[position] == (int)objetCase.POUSSIERE)
+            else if (_carte[position] == (int)ObjetCase.POUSSIERE)
             {
-                carte[position] = (int)objetCase.VIDE;
-                mesurePerformance -= malusApparitionPousiere;
+                _carte[position] = (int)ObjetCase.VIDE;
+                _mesurePerformance -= MalusApparitionPousiere;
             }
-            else if (carte[position] == (int)objetCase.POUSSIEREBIJOUX)
+            else if (_carte[position] == (int)ObjetCase.POUSSIEREBIJOUX)
             {
-                carte[position] = (int)objetCase.VIDE;
-                mesurePerformance -= malusApparitionPousiere;
-                mesurePerformance += malusAspirationBijoux;
+                _carte[position] = (int)ObjetCase.VIDE;
+                _mesurePerformance -= MalusApparitionPousiere;
+                _mesurePerformance += MalusAspirationBijoux;
             }
 
         }
 
         private void Ramasser(int position)
         {
-            if (carte[position] == (int)objetCase.BIJOUX)
+            if (_carte[position] == (int)ObjetCase.BIJOUX)
             {
-                carte[position] = (int)objetCase.VIDE;
-                mesurePerformance -= malusApparitionBijoux;
+                _carte[position] = (int)ObjetCase.VIDE;
+                _mesurePerformance -= MalusApparitionBijoux;
             }
-            else if (carte[position] == (int)objetCase.POUSSIEREBIJOUX)
+            else if (_carte[position] == (int)ObjetCase.POUSSIEREBIJOUX)
             {
-                carte[position] = (int)objetCase.POUSSIERE;
-                mesurePerformance -= malusApparitionBijoux;
+                _carte[position] = (int)ObjetCase.POUSSIERE;
+                _mesurePerformance -= MalusApparitionBijoux;
             }
         }
 
