@@ -227,6 +227,7 @@ namespace Aspirateur
     
     public class Agent
     { 
+        
         /* Exploration */
         private readonly Exploration _exploration;
         /* BDI */
