@@ -15,10 +15,11 @@ namespace Aspirateur
         public int[] Carte { get; set; }
 
         // Position de l'agent sur la carte
+        // Position initiale : 45 (au milieu de la carte)
         public int Position { get; set; }
 
         // Nombre d'actions à exécuter avant de faire une nouvelle exploration
-        // Initialement, ce paramètre sera fixé à 1
+        // Initialement, ce paramètre sera fixé à 10
         public int NbActions { get; set; }
 
         /*---------------------------------*/
@@ -26,9 +27,6 @@ namespace Aspirateur
         /*---------------------------------*/
         // Plan d'action à réaliser
         public Queue PlanDAction;
-            
-        // Coût total
-        public int Cout { get; set; }
             
         /*---------------------------------*/
         /*             Desires             */
@@ -128,8 +126,6 @@ namespace Aspirateur
     // - DROITE : l'agent se déplace d'une case vers la droite
     // - GAUCHE : l'agent se déplace d'une case vers la gauche
     public enum Action {ASPIRER, RAMASSER, HAUT, BAS, DROITE, GAUCHE, RIEN}
-
-    // NOTE : je pense qu'il faut mettre l'environnement en classe statique (une seule instance modifiée par des appels de méthode static)
     
     // Algorithmes d'exploration disponibles
     public enum AlgoExploration {LARGEUR, ASTAR}
@@ -162,7 +158,8 @@ namespace Aspirateur
                 // Test de but
                 Noeud noeud = frange.First();
                 frange.RemoveAt(0);
-                if (testBut(noeud.EtatNoeud,etatInitial) || noeud.Profondeur == nbAction) return arbreRecherche.SequenceActions(noeud);
+                if (testBut(noeud.EtatNoeud,etatInitial) || noeud.Profondeur == nbAction)
+                    return arbreRecherche.SequenceActions(noeud);
 
                 // Expansion du noeud
                 DejaVisites.Add(noeud.EtatNoeud);
@@ -275,6 +272,7 @@ namespace Aspirateur
         {
             _enVie = false;
         }
+        
         /* ------------------------------------------ */
         /*            Fonction principale             */
         /* ------------------------------------------ */
@@ -328,14 +326,13 @@ namespace Aspirateur
             Etat etatInitial = new Etat(_bdi.Position,(ObjetCase) _bdi.Carte[_bdi.Position], poussieres, bijoux);
             _bdi.PlanDAction = _exploration.Explorer(etatInitial, _bdi.NbActions, _bdi.TestBut);
         }
-
+        
+        
         private void ExecutionPlanDAction()
         {
             //booléen pour stopper le plan en cours
             bool stop = false;
             int cpt = 0;
-            // Actualiser le coût
-            _bdi.Cout+= _bdi.PlanDAction.Count;
             
             // Exécution des actions
             while (_bdi.PlanDAction.Count != 0 && !stop)

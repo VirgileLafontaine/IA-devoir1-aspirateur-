@@ -17,7 +17,7 @@ namespace Aspirateur
         /// file d'action que l'aspirateur réalise à effectuer par l'environnement
         public static volatile Queue FileAction = new Queue();
 
-        ///Mesure de performance, 0 = meilleur, poussiere +1, bijoux +10, aspirer bijoux +100
+        ///Mesure de performance, 0 = meilleur, poussiere +1, bijoux +1, aspirer bijoux +10
         private int _mesurePerformance = 0;
 
         private const int MalusApparitionPousiere = 1;

@@ -5,7 +5,12 @@ using System.Collections.Generic;
 namespace Aspirateur
 {
     /* Classe état contenant l'état associé à un noeud */
-    // Cet état contient la position de l'agent, si la case contient de la poussière et/ou un bijou et le nombre de poussières restantes
+    /* Cet état contient
+     * -  la position de l'agent,
+     * -  l'état de la pièce,
+     * -  la liste des cases contenant des bijoux,
+     * -  et la liste des cases contenant des poussières
+     */
     public class Etat
     {
         public int Position { get; set; }
